@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Everybody Up 單字大挑戰 (v19.0)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        /* 動態背景過渡 */
+        body {
+            font-family: 'Noto Sans TC', 'Fredoka', sans-serif;
+            transition: background-color 0.8s ease, color 0.5s ease;
+            overscroll-behavior: none; 
+            overflow-x: hidden;
+        }
+        
+        /* 模式主題色 */
+        .theme-easy {
+            background-color: #e0f2fe; /* 天空藍 */
+            color: #1e293b;
+        }
+        .theme-hard {
+            background-color: #2a0a0a; /* 地獄紅黑 */
+            color: #fca5a5;
+        }
+
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .correct-flash {
+            animation: correctFlash 0.5s ease-out;
+        }
+
+        @keyframes correctFlash {
+            0% { background-color: #22c55e; }
+            100% { background-color: white; }
+        }
+
+        /* 大型切換開關 */
+        .gamified-switch {
+            position: relative;
+            width: 100%;
+            height: 56px;
+            background-color: #cbd5e1;
+            border-radius: 9999px;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .theme-hard .gamified-switch {
+            background-color: #450a0a;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .switch-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: white;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s;
+            z-index: 10;
+        }
+
+        .switch-indicator.hard-active {
+            transform: translateX(100%); 
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        }
+        
+        .switch-indicator.easy-active {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+        }
+
+        /* 三段式切換開關 */
+        .mode-switch {
+            position: relative;
+            width: 100%;
+            height: 48px;
+            background-color: rgba(255,255,255,0.5);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 2px;
+            margin-top: 8px;
+        }
+        
+        .theme-hard .mode-switch {
+            background-color: rgba(0,0,0,0.3);
+            border-color: #7f1d1d;
+        }
+
+        .mode-indicator {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: calc(33.33% - 2.6px);
+            height: calc(100% - 4px);
+            border-radius: 8px;
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background 0.3s;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Mode Colors */
+        .mode-indicator.pos-0 { transform: translateX(0%); background: #3b82f6; } 
+        .mode-indicator.pos-1 { transform: translateX(100%); background: #8b5cf6; } 
+        .mode-indicator.pos-2 { transform: translateX(200%); background: linear-gradient(90deg, #f59e0b, #ef4444); } 
+
+        .theme-hard .mode-indicator.pos-0 { background: #1d4ed8; }
+        .theme-hard .mode-indicator.pos-1 { background: #7c3aed; }
+        .theme-hard .mode-indicator.pos-2 { background: linear-gradient(90deg, #b45309, #b91c1c); }
+
+        .mode-label {
+            flex: 1;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 800;
+            z-index: 20;
+            transition: color 0.2s;
+            user-select: none;
+        }
+        
+        .mode-label.active { color: white; }
+        .mode-label.inactive { color: #64748b; }
+        .theme-hard .mode-label.inactive { color: #9ca3af; }
+
+        .switch-label {
+            flex: 1;
+            text-align: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            z-index: 20;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .switch-label.active {
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .switch-label.inactive {
+            color: #64748b;
+        }
+        .theme-hard .switch-label.inactive {
+            color: #7f1d1d;
+        }
+
+        /* 皇冠彈跳動畫 */
+        .animate-bounce-custom {
+            animation: bounce-custom 1s infinite;
+        }
+        @keyframes bounce-custom {
+            0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+
+        /* 背景裝飾動畫 */
+        @keyframes floatCloud {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(20px); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes flyBat {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(-5deg); }
+            75% { transform: translateY(10px) rotate(5deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+        
+        // --- Icon Helper ---
+        const getLucideIcon = (name) => {
+            if (typeof window.lucide === 'undefined') return null;
+            const lucideGlobal = window.lucide;
+            const icons = lucideGlobal.icons || lucideGlobal;
+            return icons ? icons[name] : null;
+        };
+
+        const createLucideIcon = (name) => {
+             const iconNode = getLucideIcon(name);
+             if (!iconNode || !Array.isArray(iconNode)) return () => null;
+             
+             const Component = ({ color = "currentColor", size = 24, strokeWidth = 2, className = "", ...props }) => {
+                 const [tag, defaultAttrs, children] = iconNode;
+                 const safeChildren = Array.isArray(children) ? children : [];
+                 return React.createElement(
+                     tag, 
+                     { ...defaultAttrs, width: size, height: size, stroke: color, strokeWidth: strokeWidth, className: `lucide lucide-${name} ${className}`, ...props }, 
+                     safeChildren.map(([childTag, childAttrs], index) => React.createElement(childTag, { ...childAttrs, key: index }))
+                 );
+             };
+             return Component;
+        };
+
+        const Upload = createLucideIcon("Upload");
+        const Book = createLucideIcon("Book");
+        const Settings = createLucideIcon("Settings");
+        const Star = createLucideIcon("Star");
+        const Trophy = createLucideIcon("Trophy");
+        const Crown = createLucideIcon("Crown");
+        const RefreshCcw = createLucideIcon("RefreshCcw");
+        const CheckCircle = createLucideIcon("CheckCircle");
+        const XCircle = createLucideIcon("XCircle");
+        const Play = createLucideIcon("Play");
+        const ArrowRight = createLucideIcon("ArrowRight");
+        const Volume2 = createLucideIcon("Volume2");
+        const Home = createLucideIcon("Home");
+        const HardDrive = createLucideIcon("HardDrive");
+        const Smile = createLucideIcon("Smile"); 
+        const Flame = createLucideIcon("Flame"); 
+        const Eye = createLucideIcon("Eye");
+        const Cloud = createLucideIcon("Cloud"); 
+        const Globe = createLucideIcon("Globe");
+        const Shuffle = createLucideIcon("Shuffle");
+        const Languages = createLucideIcon("Languages");
+        const LogOut = createLucideIcon("LogOut");
+
+        const BatIcon = ({ className, style }) => (
+            <svg viewBox="0 0 24 24" fill="currentColor" className={className} style={style}>
+                <path d="M2 12s3-4 6-2c0 0 1-2 4-2 3 0 4 2 4 2 3-2 6 2 0 0-3 5-6 3 0 0-2 2-4 0 0 0-3-2-6-3z"/>
+            </svg>
+        );
+
+        // =================================================================================
+        // [預設資料] MOCK_DATA
+        // =================================================================================
+        const FALLBACK_DATA = {
+            "G1": { "Unit 1": [{ "en": "apple", "ch": "蘋果" }, { "en": "bear", "ch": "熊" }] }
+        };
+
+        // --- Helper: CSV Parser ---
+        const parseCSV = (content, fileName) => {
+            const lines = content.split(/\r?\n/);
+            const unitsData = {};
+            let headerRowIndex = -1;
+            for(let i=0; i<lines.length && i<10; i++) {
+                if(lines[i].includes("Unit 1")) { headerRowIndex = i; break; }
+            }
+            if (headerRowIndex === -1) return null;
+            const rows = lines.slice(headerRowIndex + 1); 
+            for (let u = 1; u <= 8; u++) {
+                const enCol = (u - 1) * 3;
+                const chCol = enCol + 1;
+                const unitName = `Unit ${u}`;
+                const vocabList = [];
+                rows.forEach(row => {
+                    let cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); 
+                    cols = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : '');
+                    if (cols.length > chCol) {
+                        const en = cols[enCol];
+                        const ch = cols[chCol];
+                        if (en && ch && en.toLowerCase() !== 'nan') vocabList.push({ en, ch });
+                    }
+                });
+                if (vocabList.length > 0) unitsData[unitName] = vocabList;
+            }
+            return unitsData;
+        };
+
+        // --- Helper: LocalStorage ---
+        const STORAGE_KEY = 'everybodyup_settings_v1';
+        const loadSettings = () => {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                return saved ? JSON.parse(saved) : null;
+            } catch (e) { return null; }
+        };
+        const saveSettings = (settings) => {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            } catch (e) {}
+        };
+
+        // --- Components ---
+
+        const BackgroundDecorations = ({ difficulty }) => {
+            if (difficulty === 'hard') {
+                return (
+                    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+                        <BatIcon className="absolute text-black opacity-20 w-16 h-16 top-10 left-10" style={{animation: 'flyBat 4s infinite ease-in-out'}} />
+                        <BatIcon className="absolute text-black opacity-10 w-24 h-24 top-1/3 right-20" style={{animation: 'flyBat 6s infinite ease-in-out reverse'}} />
+                        <BatIcon className="absolute text-black opacity-15 w-12 h-12 bottom-20 left-1/4" style={{animation: 'flyBat 5s infinite ease-in-out 1s'}} />
+                    </div>
+                );
+            }
+            return (
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+                    <Cloud className="absolute text-white opacity-40 w-32 h-32 top-20 -left-10" style={{animation: 'floatCloud 8s infinite ease-in-out'}} />
+                    <Cloud className="absolute text-white opacity-30 w-48 h-48 top-40 -right-10" style={{animation: 'floatCloud 12s infinite ease-in-out reverse'}} />
+                    <Cloud className="absolute text-white opacity-20 w-24 h-24 bottom-32 left-20" style={{animation: 'floatCloud 10s infinite ease-in-out 2s'}} />
+                </div>
+            );
+        };
+
+        const FileUploader = ({ onDataLoaded, dataSourceStatus }) => {
+            const handleFileUpload = (event) => {
+                const files = Array.from(event.target.files);
+                if (files.length === 0) return;
+                const newDb = {};
+                let processedCount = 0;
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const content = e.target.result;
+                        if (file.name.toLowerCase().endsWith('.json')) {
+                            try {
+                                const jsonData = JSON.parse(content);
+                                Object.assign(newDb, jsonData);
+                            } catch (err) { alert("JSON 格式錯誤"); }
+                        } else {
+                            let grade = file.name.includes("G") ? file.name.split(".")[0].split("-").pop().trim() : "G1"; 
+                            if(file.name.includes("G1")) grade = "G1";
+                            if(file.name.includes("G2")) grade = "G2";
+                            if(file.name.includes("G3")) grade = "G3";
+                            if(file.name.includes("G4")) grade = "G4";
+                            if(file.name.includes("G5")) grade = "G5";
+                            if(file.name.includes("G6")) grade = "G6";
+                            const parsedData = parseCSV(content, file.name);
+                            if (parsedData) newDb[grade] = parsedData;
+                        }
+                        processedCount++;
+                        if (processedCount === files.length) onDataLoaded(newDb);
+                    };
+                    reader.readAsText(file); 
+                });
+            };
+
+            return (
+                <div className="mb-6 p-4 border rounded-xl text-center bg-white/50 border-gray-200 relative z-10">
+                    <div className="mb-2">
+                         {dataSourceStatus === 'external' ? (
+                            <p className="text-xs text-green-600 font-bold flex items-center justify-center gap-1">
+                                <Globe size={14} /> 雲端資料庫已連線
+                            </p>
+                         ) : dataSourceStatus === 'manual' ? (
+                            <p className="text-xs text-blue-600 font-bold flex items-center justify-center gap-1">
+                                <HardDrive size={14} /> 已載入使用者檔案
+                            </p>
+                         ) : (
+                            <p className="text-xs opacity-60 font-bold flex items-center justify-center gap-1 text-red-500">
+                                <Settings size={14} /> 無資料庫 (請上傳 database.json)
+                            </p>
+                         )}
+                    </div>
+                    <input type="file" multiple accept=".csv,.json" onChange={handleFileUpload} className="hidden" id="csv-upload" />
+                    <label htmlFor="csv-upload" className="cursor-pointer inline-flex items-center gap-2 text-blue-500 hover:text-blue-600 text-sm font-bold opacity-60 hover:opacity-100 transition-opacity">
+                        <Upload size={16} /> 手動更新資料
+                    </label>
+                </div>
+            );
+        };
+
+        const ModeSwitch = ({ mode, setMode, isHard }) => {
+            const modes = [
+                { id: 'en-ch', label: '英 ➔ 中' },
+                { id: 'ch-en', label: '中 ➔ 英' },
+                { id: 'mixed', label: '混合大亂鬥' }
+            ];
+            
+            const activeIndex = modes.findIndex(m => m.id === mode);
+            
+            return (
+                <div className="w-full">
+                    <label className={`text-xs font-bold mb-1 block ${isHard ? 'text-red-300' : 'text-gray-500'}`}>語言模式</label>
+                    <div className="mode-switch">
+                        <div className={`mode-indicator pos-${activeIndex}`}></div>
+                        {modes.map((m, idx) => (
+                            <div 
+                                key={m.id} 
+                                className={`mode-label ${mode === m.id ? 'active' : 'inactive'}`}
+                                onClick={() => setMode(m.id)}
+                            >
+                                {m.label}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const MainMenu = ({ db, onStartGame, difficulty, setDifficulty, savedSettings }) => {
+            const [selectedGrades, setSelectedGrades] = useState([]);
+            const [startUnit, setStartUnit] = useState(null);
+            const [endUnit, setEndUnit] = useState(null);
+            const [mode, setMode] = useState("en-ch"); 
+
+            useEffect(() => {
+                const settings = loadSettings();
+                if (settings) {
+                    if (settings.grades && Array.isArray(settings.grades)) setSelectedGrades(settings.grades);
+                    if (settings.startUnit) setStartUnit(settings.startUnit);
+                    if (settings.endUnit) setEndUnit(settings.endUnit);
+                    if (settings.mode) setMode(settings.mode);
+                    if (settings.difficulty) setDifficulty(settings.difficulty);
+                } else {
+                    const available = Object.keys(db).sort();
+                    if (available.length > 0) {
+                        setSelectedGrades([available[0]]);
+                    }
+                }
+            }, []); 
+
+            const availableUnits = useMemo(() => {
+                if (selectedGrades.length === 0) {
+                    const available = Object.keys(db).sort();
+                    if (available.length > 0) return []; 
+                    return [];
+                }
+
+                const unitsSet = new Set();
+                selectedGrades.forEach(g => {
+                    if (db[g]) {
+                        Object.keys(db[g]).forEach(key => {
+                            if (key.startsWith("Unit ")) {
+                                const suffix = key.replace("Unit ", "");
+                                unitsSet.add(suffix);
+                            }
+                        });
+                    }
+                });
+                const sorted = Array.from(unitsSet).sort((a, b) => {
+                    const numA = parseInt(a);
+                    const numB = parseInt(b);
+                    const isNumA = !isNaN(numA);
+                    const isNumB = !isNaN(numB);
+                    if (isNumA && isNumB) return numA - numB;
+                    if (isNumA && !isNumB) return -1;
+                    if (!isNumA && isNumB) return 1;
+                    return a.localeCompare(b);
+                });
+                return sorted.length > 0 ? sorted : ["1"];
+            }, [selectedGrades, db]);
+
+            useEffect(() => {
+                if (availableUnits.length > 0) {
+                    if (!startUnit || !availableUnits.includes(startUnit)) setStartUnit(availableUnits[0]);
+                    if (!endUnit || !availableUnits.includes(endUnit)) setEndUnit(availableUnits[availableUnits.length - 1]);
+                }
+            }, [availableUnits]);
+
+            useEffect(() => {
+                const available = Object.keys(db).sort();
+                if (available.length > 0 && selectedGrades.length === 0) {
+                     if (loadSettings() === null) {
+                         setSelectedGrades([available[0]]);
+                     }
+                }
+            }, [db]);
+
+
+            const toggleGrade = (grade) => {
+                if (!db[grade]) return;
+                setSelectedGrades(prev => {
+                    if (prev.includes(grade)) return prev.filter(g => g !== grade);
+                    return [...prev, grade];
+                });
+            };
+
+            const handleStart = () => {
+                if (selectedGrades.length === 0) return;
+                
+                const startIndex = availableUnits.indexOf(startUnit);
+                const endIndex = availableUnits.indexOf(endUnit);
+                const validStart = Math.min(startIndex, endIndex);
+                const validEnd = Math.max(startIndex, endIndex);
+                const targetUnits = availableUnits.slice(validStart, validEnd + 1);
+
+                saveSettings({
+                    grades: selectedGrades,
+                    startUnit,
+                    endUnit,
+                    mode,
+                    difficulty
+                });
+
+                onStartGame({
+                    grades: selectedGrades,
+                    targetUnits: targetUnits, 
+                    mode: mode,
+                    difficulty: difficulty
+                });
+            };
+
+            const availableGrades = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6'];
+            const isHard = difficulty === 'hard';
+
+            return (
+                <div className="max-w-md mx-auto w-full p-2 relative z-10">
+                    <div className="text-center mb-6 mt-4">
+                        <h1 className={`text-4xl font-black drop-shadow-md mb-2 tracking-wide transition-colors ${isHard ? 'text-red-500' : 'text-yellow-500'}`} style={{fontFamily: 'Fredoka'}}>VOCAB MASTER</h1>
+                        <p className={`font-medium flex items-center justify-center gap-2 transition-colors ${isHard ? 'text-red-300' : 'text-gray-600'}`}>
+                            Everybody Up 單字複習
+                        </p>
+                    </div>
+
+                    <div className="mb-8">
+                        <div className="gamified-switch" onClick={() => setDifficulty(isHard ? 'easy' : 'hard')}>
+                            <div className={`switch-indicator ${isHard ? 'hard-active' : 'easy-active'}`}></div>
+                            <div className={`switch-label ${!isHard ? 'active' : 'inactive'}`}><Smile size={20} /> 天使模式</div>
+                            <div className={`switch-label ${isHard ? 'active' : 'inactive'}`}><Flame size={20} /> 地獄模式</div>
+                        </div>
+                        <p className={`text-xs mt-3 text-center font-bold transition-colors ${isHard ? 'text-red-400' : 'text-blue-600'}`}>
+                            {isHard ? '🔥 燃燒吧！極限拼字，錯了沒分！' : '🍰 一塊蛋糕！輕鬆選，快樂拿分！'}
+                        </p>
+                    </div>
+
+                    <div className="mb-6">
+                        <label className={`block font-bold mb-2 flex items-center gap-2 transition-colors ${isHard ? 'text-red-200' : 'text-gray-700'}`}>
+                            <Book size={20} className={isHard ? "text-red-500" : "text-blue-500"}/> 選擇年級
+                        </label>
+                        <div className="grid grid-cols-3 gap-3">
+                            {availableGrades.map(g => {
+                                const isSelected = selectedGrades.includes(g);
+                                const hasData = !!db[g];
+                                let btnClass = "bg-gray-100 text-gray-300 cursor-not-allowed";
+                                if (hasData) {
+                                    if (isSelected) {
+                                        btnClass = isHard 
+                                            ? "bg-red-600 text-white shadow-lg ring-2 ring-red-400 border-transparent" 
+                                            : "bg-blue-500 text-white shadow-lg ring-2 ring-blue-300 border-transparent";
+                                    } else {
+                                        btnClass = isHard
+                                            ? "bg-red-950/30 text-red-200 border-2 border-red-900 hover:bg-red-900/50"
+                                            : "bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-100";
+                                    }
+                                }
+                                return (
+                                    <button
+                                        key={g}
+                                        onClick={() => toggleGrade(g)}
+                                        disabled={!hasData}
+                                        className={`py-3 rounded-xl font-bold text-lg transition-all relative ${btnClass}`}
+                                    >
+                                        {g}
+                                        {isSelected && <CheckCircle size={16} className="absolute top-1 right-1 text-white/50" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4 mb-8">
+                        <div className={`p-2 rounded-xl border transition-colors ${isHard ? 'bg-red-950/30 border-red-900' : 'bg-white/50 border-gray-200'}`}>
+                            <label className={`text-xs font-bold mb-1 block ${isHard ? 'text-red-300' : 'text-gray-500'}`}>範圍 Unit</label>
+                            <div className="flex items-center gap-1">
+                                <select value={startUnit || ""} onChange={(e) => setStartUnit(e.target.value)} 
+                                    className={`w-full h-12 rounded px-2 text-lg font-bold border outline-none ${isHard ? 'bg-red-900 text-white border-red-800' : 'bg-white border-gray-200'}`}>
+                                    {availableUnits.map(u => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                                <span className={`text-xl font-bold px-1 ${isHard ? 'text-red-500' : 'text-gray-400'}`}>-</span>
+                                <select value={endUnit || ""} onChange={(e) => setEndUnit(e.target.value)} 
+                                    className={`w-full h-12 rounded px-2 text-lg font-bold border outline-none ${isHard ? 'bg-red-900 text-white border-red-800' : 'bg-white border-gray-200'}`}>
+                                    {availableUnits.map(u => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <ModeSwitch mode={mode} setMode={setMode} isHard={isHard} />
+                    </div>
+
+                    <button 
+                        onClick={handleStart}
+                        disabled={selectedGrades.length === 0}
+                        className={`w-full text-xl font-black py-4 rounded-2xl shadow-lg transform transition flex items-center justify-center gap-2
+                            ${selectedGrades.length > 0
+                                ? (isHard 
+                                    ? 'bg-gradient-to-r from-red-600 to-orange-700 hover:from-red-500 hover:to-orange-600 text-white hover:scale-[1.02] active:scale-95'
+                                    : 'bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white hover:scale-[1.02] active:scale-95')
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                    >
+                        <Play fill="white" /> {isHard ? '接受挑戰' : '開始練習'}
+                    </button>
+                </div>
+            );
+        };
+
+        const GameScreen = ({ config, db, onFinish, onHome }) => {
+            const [questions, setQuestions] = useState([]);
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [isCorrect, setIsCorrect] = useState(null); 
+            const [score, setScore] = useState(0);
+            const [streak, setStreak] = useState(0);
+            const [shakingIndex, setShakingIndex] = useState(-1);
+            const [inputAnswer, setInputAnswer] = useState(""); 
+            const [wrongQuestions, setWrongQuestions] = useState([]); 
+            
+            const inputRef = useRef(null);
+            const nextBtnRef = useRef(null);
+
+            useEffect(() => {
+                const { grades, targetUnits, mode, difficulty } = config;
+                
+                let pool = [];
+                grades.forEach(grade => {
+                    targetUnits.forEach(uSuffix => {
+                        const uKey = `Unit ${uSuffix}`;
+                        if (db[grade] && db[grade][uKey]) {
+                            pool = [...pool, ...db[grade][uKey]];
+                        }
+                    });
+                });
+
+                if (pool.length === 0) {
+                    alert("⚠️ 無資料！");
+                    onHome();
+                    return;
+                }
+
+                const TARGET_QUESTIONS = 10;
+                let selectedWords = [];
+                if (pool.length >= TARGET_QUESTIONS) {
+                    selectedWords = [...pool].sort(() => 0.5 - Math.random()).slice(0, TARGET_QUESTIONS);
+                } else {
+                    selectedWords = [...pool];
+                    while (selectedWords.length < TARGET_QUESTIONS) {
+                        selectedWords.push(pool[Math.floor(Math.random() * pool.length)]);
+                    }
+                    selectedWords.sort(() => 0.5 - Math.random());
+                }
+
+                const newQuestions = selectedWords.map(word => {
+                    let type = mode;
+                    if (mode === 'mixed') type = Math.random() > 0.5 ? 'en-ch' : 'ch-en';
+                    const questionText = type === 'en-ch' ? word.en : word.ch;
+                    const answerText = type === 'en-ch' ? word.ch : word.en;
+
+                    let options = [];
+                    if (difficulty === 'easy') {
+                        let uniquePool = [...new Set(pool.map(w => JSON.stringify(w)))].map(s => JSON.parse(s));
+                        let potentialDistractors = uniquePool.filter(w => (type === 'en-ch' ? w.ch : w.en) !== answerText).map(w => (type === 'en-ch' ? w.ch : w.en));
+                        let finalDistractors = potentialDistractors.sort(() => 0.5 - Math.random()).slice(0, 3);
+                        options = [...finalDistractors, answerText].sort(() => 0.5 - Math.random());
+                    }
+
+                    return { q: questionText, a: answerText, options, type, originalWord: word };
+                });
+                setQuestions(newQuestions);
+            }, [config, db]);
+
+            useEffect(() => {
+                if (config.difficulty === 'hard' && isCorrect === null) {
+                    setTimeout(() => inputRef.current?.focus(), 50);
+                }
+                else if (isCorrect !== null) {
+                    setTimeout(() => nextBtnRef.current?.focus(), 50);
+                }
+            }, [currentQIndex, isCorrect, config.difficulty]);
+
+            const speakWord = (text) => {
+                if (/[a-zA-Z]/.test(text)) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-US';
+                    window.speechSynthesis.speak(utterance);
+                }
+            };
+
+            const handleOptionClick = (option, index) => {
+                if (isCorrect !== null) return; 
+                
+                const currentQ = questions[currentQIndex];
+                
+                if (option === currentQ.a) {
+                    setIsCorrect(true);
+                    setScore(s => s + 10 + Math.min(streak * 2, 10));
+                    setStreak(s => s + 1);
+                    confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ['#22c55e', '#fbbf24'] });
+                    if (currentQ.type === 'ch-en') speakWord(option); else speakWord(currentQ.q);
+                } else {
+                    setIsCorrect(false);
+                    setStreak(0);
+                    setWrongQuestions(prev => [...prev, { q: currentQ.q, a: currentQ.a, user: option, type: currentQ.type }]);
+                }
+                setSelectedOption(option);
+            };
+
+            const handleInputSubmit = (e) => {
+                e.preventDefault();
+                if (isCorrect !== null) return; 
+                const currentQ = questions[currentQIndex];
+                const cleanInput = inputAnswer.trim().toLowerCase();
+                const cleanAnswer = currentQ.a.toLowerCase();
+
+                if (cleanInput === cleanAnswer) {
+                    setIsCorrect(true);
+                    setScore(s => s + 20 + Math.min(streak * 5, 20));
+                    setStreak(s => s + 1);
+                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+                    if (currentQ.type === 'ch-en') speakWord(currentQ.a); else speakWord(currentQ.q);
+                } else {
+                    setIsCorrect(false); 
+                    setStreak(0);
+                    setWrongQuestions(prev => [...prev, { q: currentQ.q, a: currentQ.a, user: inputAnswer, type: currentQ.type }]);
+                }
+            };
+
+            const nextQuestion = () => {
+                if (currentQIndex < questions.length - 1) {
+                    setCurrentQIndex(prev => prev + 1);
+                    setSelectedOption(null);
+                    setIsCorrect(null);
+                    setInputAnswer("");
+                } else {
+                    onFinish(score, wrongQuestions);
+                }
+            };
+
+            if (questions.length === 0) return <div className="p-10 text-center font-bold text-gray-500">準備中...</div>;
+
+            const currentQ = questions[currentQIndex];
+            const progress = ((currentQIndex) / questions.length) * 100;
+            const isHard = config.difficulty === 'hard';
+
+            return (
+                <div className="max-w-md mx-auto w-full h-screen flex flex-col pb-6 px-4 relative z-10">
+                    <div className="flex justify-between items-center mb-4 pt-4">
+                        <button onClick={onHome} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border-2 font-bold transition-all
+                            ${isHard ? 'border-red-400 bg-red-900/40 text-red-200 hover:bg-red-900/60' 
+                                     : 'border-blue-200 bg-white/60 text-blue-600 hover:bg-white/80'}`}>
+                            <LogOut size={18} /> <span className="text-sm">退出重設</span>
+                        </button>
+                        
+                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full shadow-sm ${isHard ? 'bg-red-900/50 text-red-200' : 'bg-white text-gray-700'}`}>
+                            <Star className="text-yellow-400 fill-current" size={18} />
+                            <span className="font-bold">{score}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            {streak > 1 && <span className="text-orange-500 font-black italic animate-pulse mr-2">{streak} COMBO!</span>}
+                            <span className={`text-sm font-bold ${isHard ? 'text-red-400' : 'text-gray-400'}`}>{currentQIndex + 1}/{questions.length}</span>
+                        </div>
+                    </div>
+                    
+                    <div className={`w-full h-3 rounded-full mb-6 overflow-hidden ${isHard ? 'bg-red-900' : 'bg-gray-200'}`}>
+                        <div className={`h-full rounded-full transition-all duration-500 ease-out ${isHard ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }}></div>
+                    </div>
+
+                    <div className="flex-grow flex flex-col justify-center">
+                        <div className={`rounded-3xl p-8 mb-6 card-shadow text-center relative overflow-hidden min-h-[160px] flex flex-col justify-center items-center transition-colors duration-300 
+                            ${isHard ? 'bg-red-950 border border-red-900' : 'bg-white'} 
+                            ${isCorrect === false && isHard ? 'border-4 border-red-500' : ''}`}>
+                            
+                            {isCorrect === true && <div className="absolute inset-0 bg-green-100 opacity-20 correct-flash"></div>}
+                            
+                            <span className={`absolute top-4 left-0 right-0 mx-auto w-max px-3 py-1 text-xs font-bold rounded-full ${isHard ? 'bg-red-900 text-red-300' : 'bg-gray-100 text-gray-400'}`}>
+                                {currentQ.type === 'en-ch' ? '英文 ➔ 中文' : '中文 ➔ 英文'}
+                            </span>
+                            
+                            <h2 className={`text-3xl font-black break-words leading-tight mt-4 ${isHard ? 'text-red-100' : 'text-gray-800'}`}>
+                                {currentQ.q}
+                            </h2>
+                            {currentQ.type === 'en-ch' && (
+                                <button onClick={() => speakWord(currentQ.q)} className={`mt-4 ${isHard ? 'text-red-400 hover:text-red-200' : 'text-blue-400 hover:text-blue-600'}`}>
+                                    <Volume2 size={24} />
+                                </button>
+                            )}
+                        </div>
+
+                        {!isHard ? (
+                            <div className="grid grid-cols-1 gap-3">
+                                {currentQ.options.map((opt, idx) => {
+                                    const isSelected = selectedOption === opt;
+                                    const isAnswer = opt === currentQ.a;
+                                    
+                                    let btnClass = "bg-white text-gray-700 border-b-4 border-gray-200 hover:bg-gray-50 active:border-b-0 active:translate-y-[4px]";
+                                    
+                                    if (isCorrect !== null) {
+                                        if (isAnswer) {
+                                            btnClass = "bg-green-500 text-white border-green-700 border-b-4"; 
+                                        } else if (isSelected && !isCorrect) {
+                                            btnClass = "bg-red-500 text-white border-red-700 border-b-4";
+                                        } else {
+                                            btnClass = "bg-gray-100 text-gray-400 border-gray-200 border-b-4 opacity-50";
+                                        }
+                                    }
+
+                                    return (
+                                        <button key={idx} onClick={() => handleOptionClick(opt, idx)} disabled={isCorrect !== null}
+                                            className={`w-full py-3 px-2 rounded-xl font-bold text-lg transition-all relative ${btnClass}`}>
+                                            <span className="break-words line-clamp-1">{opt}</span>
+                                            {isCorrect !== null && isAnswer && <CheckCircle className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80" />}
+                                            {isSelected && !isCorrect && <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="w-full">
+                                <form onSubmit={handleInputSubmit} className="relative">
+                                    <input 
+                                        ref={inputRef} 
+                                        type="text" 
+                                        value={inputAnswer} 
+                                        onChange={(e) => setInputAnswer(e.target.value)} 
+                                        disabled={isCorrect !== null} 
+                                        placeholder="在此輸入答案..."
+                                        className={`w-full p-4 text-xl font-bold text-center rounded-xl border-2 outline-none transition-colors
+                                            ${isCorrect === true ? 'border-green-500 bg-green-900/30 text-green-400' : 
+                                              isCorrect === false ? 'border-red-500 bg-red-900/30 text-red-400' : 'border-red-800 bg-red-950 text-white focus:border-red-500'}`} 
+                                    />
+                                    {isCorrect === null && (
+                                        <button type="submit" className="absolute right-2 top-2 bottom-2 bg-red-600 text-white px-4 rounded-lg font-bold hover:bg-red-500">GO</button>
+                                    )}
+                                </form>
+                                {isCorrect === false && (
+                                    <div className="mt-4 p-4 bg-red-950/50 border border-red-900 rounded-xl text-center animate-bounce-short">
+                                        <p className="text-red-400 font-bold text-sm uppercase">Correct Answer</p>
+                                        <p className="text-2xl font-black text-red-500">{currentQ.a}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="h-20 flex items-center justify-center mt-4">
+                        {(isCorrect !== null) && (
+                            <button 
+                                ref={nextBtnRef} 
+                                onClick={nextQuestion} 
+                                className={`w-full text-xl font-bold py-3 rounded-2xl shadow-lg flex items-center justify-center gap-2 animate-bounce-short ${isHard ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+                            >
+                                下一題 <ArrowRight />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const ResultScreen = ({ score, wrongQuestions, onRestart, difficulty }) => {
+            const isHard = difficulty === 'hard';
+            const maxScore = isHard ? 350 : 170;
+            const totalQuestions = 10;
+            const correctCount = totalQuestions - wrongQuestions.length;
+
+            let rank = 'B';
+            let RankIcon = XCircle;
+            let rankColor = 'text-gray-500';
+            let iconSize = 80;
+            let feedbackClass = ""; 
+
+            if (correctCount === 10) {
+                rank = 'PERFECT';
+                RankIcon = Crown;
+                rankColor = 'text-yellow-400 drop-shadow-xl animate-bounce-custom'; 
+                iconSize = 160; 
+                feedbackClass = isHard 
+                    ? "border-4 border-yellow-500 shadow-[0_0_60px_rgba(234,179,8,0.6)] bg-gradient-to-b from-red-950 to-yellow-900/20" 
+                    : "border-4 border-yellow-300 shadow-[0_0_60px_rgba(250,204,21,0.6)] bg-gradient-to-b from-white to-yellow-50";
+            } else if (correctCount >= 9) { 
+                rank = 'SS';
+                RankIcon = Trophy;
+                rankColor = 'text-yellow-500';
+                feedbackClass = isHard
+                    ? "border-2 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.4)]"
+                    : "border-2 border-purple-200 shadow-[0_0_30px_rgba(168,85,247,0.2)]";
+            } else if (correctCount >= 8) {
+                rank = 'S';
+                RankIcon = Star;
+                rankColor = 'text-purple-500';
+                feedbackClass = isHard
+                    ? "border-2 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.4)]"
+                    : "border-2 border-purple-200 shadow-[0_0_30px_rgba(168,85,247,0.2)]";
+            } else if (correctCount >= 6) {
+                rank = 'A';
+                RankIcon = CheckCircle;
+                rankColor = 'text-green-500';
+                feedbackClass = isHard
+                    ? "border border-green-800 shadow-[0_0_20px_rgba(34,197,94,0.2)]"
+                    : "border border-green-200 shadow-lg";
+            } else {
+                rank = 'B';
+                RankIcon = XCircle;
+                rankColor = 'text-red-400';
+                feedbackClass = isHard
+                    ? "border border-red-900 opacity-90"
+                    : "border border-red-100";
+            }
+
+            useEffect(() => { 
+                if (correctCount >= 6) {
+                    const isPerfect = correctCount === 10;
+                    confetti({ 
+                        particleCount: isPerfect ? 300 : 100, 
+                        spread: isPerfect ? 120 : 70, 
+                        origin: { y: 0.6 },
+                        colors: isPerfect ? ['#FFD700', '#FFA500', '#FFFFFF'] : undefined
+                    }); 
+                }
+            }, [correctCount]);
+
+            return (
+                <div className={`max-w-md mx-auto w-full min-h-screen flex flex-col p-4 overflow-y-auto relative z-10 ${isHard ? 'text-white' : 'text-gray-800'}`}>
+                    <div className={`p-8 rounded-3xl shadow-xl w-full text-center mb-6 relative transition-all duration-500 ${isHard ? 'bg-red-950' : 'bg-white'} ${feedbackClass}`}>
+                        <div className={`mx-auto mb-4 flex items-center justify-center transition-all duration-500 ${rankColor}`}>
+                            <RankIcon size={iconSize} strokeWidth={1.5} />
+                        </div>
+                        
+                        <h2 className={`text-3xl font-bold mb-2 ${isHard ? 'text-red-100' : 'text-gray-800'}`}>挑戰完成!</h2>
+                        
+                        <div className="my-4">
+                            <span className={`font-bold uppercase tracking-widest text-sm ${isHard ? 'text-red-400' : 'text-gray-400'}`}>Score</span>
+                            <div className={`text-6xl font-black ${isHard ? 'text-white' : 'text-gray-800'}`}>
+                                {score} <span className="text-xl opacity-50">/ {maxScore}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="mb-6">
+                            <span className={`font-bold uppercase tracking-widest text-sm ${isHard ? 'text-red-400' : 'text-gray-400'}`}>Rank</span>
+                            <div className={`text-6xl font-black ${rankColor} drop-shadow-sm`}>{rank}</div>
+                        </div>
+                        
+                        <button onClick={onRestart} className={`w-full font-bold py-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 ${isHard ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}>
+                            <RefreshCcw size={20}/> 再玩一次
+                        </button>
+                    </div>
+
+                    {wrongQuestions && wrongQuestions.length > 0 && (
+                        <div className={`p-6 rounded-3xl shadow-md w-full ${isHard ? 'bg-red-950 border border-red-900' : 'bg-white'}`}>
+                            <h3 className="text-xl font-bold text-red-500 mb-4 flex items-center gap-2">
+                                <Eye size={24}/> 錯題複習 ({wrongQuestions.length})
+                            </h3>
+                            <div className="space-y-4">
+                                {wrongQuestions.map((item, idx) => (
+                                    <div key={idx} className={`border-b pb-3 last:border-0 last:pb-0 ${isHard ? 'border-red-900' : 'border-gray-100'}`}>
+                                        <p className={`text-sm font-bold mb-1 ${isHard ? 'text-red-300' : 'text-gray-500'}`}>Q: {item.q}</p>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-red-400 line-through text-sm">{item.user || "(未作答)"}</span>
+                                            <span className="text-green-500 font-black text-lg">{item.a}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [db, setDb] = useState(FALLBACK_DATA); // 預設為空/假資料
+            const [gameState, setGameState] = useState('menu'); 
+            const [gameConfig, setGameConfig] = useState(null);
+            const [finalScore, setFinalScore] = useState(0);
+            const [wrongQuestions, setWrongQuestions] = useState([]);
+            const [dataSourceStatus, setDataSourceStatus] = useState('none'); 
+            const [difficulty, setDifficulty] = useState('easy'); 
+            const [savedSettings, setSavedSettings] = useState(null);
+
+            // Init: Load Settings
+            useEffect(() => {
+                const settings = loadSettings();
+                if (settings) {
+                    setSavedSettings(settings);
+                    if (settings.difficulty) setDifficulty(settings.difficulty);
+                }
+            }, []);
+
+            // Dynamic Body Background
+            useEffect(() => {
+                document.body.className = difficulty === 'hard' ? 'theme-hard' : 'theme-easy';
+            }, [difficulty]);
+
+            // ==========================================================
+            // [Final Release] 自動讀取 database.json
+            // ==========================================================
+            useEffect(() => {
+                const timestamp = new Date().getTime(); 
+                fetch(`./database.json?t=${timestamp}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Local database file not found");
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("External DB loaded", data);
+                        setDb(data);
+                        setDataSourceStatus('external');
+                    })
+                    .catch(err => {
+                        console.log("External DB not found, using Fallback Data");
+                        setDataSourceStatus('none');
+                    });
+            }, []);
+
+            const handleDataLoaded = (newDb) => {
+                setDb(prev => ({ ...prev, ...newDb }));
+                setDataSourceStatus('manual'); 
+                alert(`成功載入！現在包含了 ${Object.keys(newDb).length} 個年級的資料。`);
+            };
+
+            const startGame = (config) => {
+                setGameConfig(config);
+                setGameState('game');
+            };
+
+            const finishGame = (score, wrongs) => {
+                setFinalScore(score);
+                setWrongQuestions(wrongs || []);
+                setGameState('result');
+            };
+
+            const restart = () => {
+                setGameState('menu');
+                setFinalScore(0);
+                setWrongQuestions([]);
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center">
+                    <BackgroundDecorations difficulty={difficulty} />
+                    {gameState === 'menu' && (
+                        <div className="w-full max-w-md relative z-10">
+                             <MainMenu 
+                                db={db} 
+                                onStartGame={startGame} 
+                                difficulty={difficulty} 
+                                setDifficulty={setDifficulty}
+                                savedSettings={savedSettings}
+                             />
+                             <FileUploader onDataLoaded={handleDataLoaded} dataSourceStatus={dataSourceStatus} />
+                        </div>
+                    )}
+                    {gameState === 'game' && (
+                        <GameScreen config={gameConfig} db={db} onFinish={finishGame} onHome={restart} />
+                    )}
+                    {gameState === 'result' && (
+                        <ResultScreen score={finalScore} wrongQuestions={wrongQuestions} onRestart={restart} difficulty={difficulty} />
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
