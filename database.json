@@ -576,16 +576,18 @@
       { "en": "electricity", "ch": "電力" }
     ],
     "Unit NEW": [
-      { "en": "with", "ch": "和/一起" },
-      { "en": "nobody", "ch": "沒有人" },
-      { "en": "hate", "ch": "討厭" },
-      { "en": "swim", "ch": "游泳" },
+      { "en": "Sunday", "ch": "星期日" },
+      { "en": "Monday", "ch": "星期一" },
+      { "en": "Saturday", "ch": "星期六" },
+      { "en": "run", "ch": "跑" },
       { "en": "very much", "ch": "非常" },
       { "en": "study", "ch": "讀書" },
-      { "en": "nothing", "ch": "沒有什麼" }
+      { "en": "play", "ch": "玩" }
     ],
     "Unit ADD": [
       { "en": "morning", "ch": "早上" },
+      { "en": "with", "ch": "和/一起" },
+      { "en": "swim", "ch": "游泳" },
       { "en": "Sunday", "ch": "星期日" },
       { "en": "evening", "ch": "晚上" },
       { "en": "Monday", "ch": "星期一" },
