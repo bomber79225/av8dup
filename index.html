@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Everybody Up 單字大挑戰 (v26.0)</title>
+    <title>Everybody Up 單字大挑戰 (v27.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -529,7 +529,23 @@
                         ) : (
                             <div className="w-full">
                                 <form onSubmit={handleInput} className="relative">
-                                    <input ref={inputRef} type="text" value={inputAnswer} onChange={(e) => setInputAnswer(e.target.value)} disabled={isCorrect !== null} placeholder="在此輸入答案..." autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className={`w-full p-4 text-xl font-bold text-center rounded-xl border-2 outline-none transition-colors ${isCorrect === true ? 'border-green-500 bg-green-900/30 text-green-400' : isCorrect === false ? 'border-red-500 bg-red-900/30 text-red-400' : 'border-red-800 bg-red-950 text-white focus:border-red-500'}`} />
+                                    {/* IMPORTANT: Unique key forces re-mount of input to clear keyboard state */}
+                                    <input 
+                                        key={currentQIndex}
+                                        ref={inputRef} 
+                                        type="text" 
+                                        name={`answer-${currentQIndex}`}
+                                        value={inputAnswer} 
+                                        onChange={(e) => setInputAnswer(e.target.value)} 
+                                        disabled={isCorrect !== null} 
+                                        placeholder="在此輸入答案..." 
+                                        autoComplete="off" 
+                                        autoCorrect="off" 
+                                        autoCapitalize="off" 
+                                        spellCheck="false" 
+                                        data-lpignore="true"
+                                        className={`w-full p-4 text-xl font-bold text-center rounded-xl border-2 outline-none transition-colors ${isCorrect === true ? 'border-green-500 bg-green-900/30 text-green-400' : isCorrect === false ? 'border-red-500 bg-red-900/30 text-red-400' : 'border-red-800 bg-red-950 text-white focus:border-red-500'}`} 
+                                    />
                                     {isCorrect === null && <button type="submit" className="absolute right-2 top-2 bottom-2 bg-red-600 text-white px-4 rounded-lg font-bold hover:bg-red-500">GO</button>}
                                 </form>
                                 {isCorrect === false && <div className="mt-4 p-4 bg-red-950/50 border border-red-900 rounded-xl text-center animate-bounce-short"><p className="text-red-400 font-bold text-sm uppercase">Correct Answer</p><p className="text-2xl font-black text-red-500">{q.a}</p></div>}
