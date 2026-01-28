@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Everybody Up 單字大挑戰 (v25.0)</title>
+    <title>Everybody Up 單字大挑戰 (v26.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -166,13 +166,13 @@
 
         const BackgroundDecorations = ({ difficulty }) => {
             if (difficulty === 'hard') return (
-                <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
                     <BatIcon className="absolute text-black opacity-20 w-16 h-16 top-10 left-10" style={{animation: 'flyBat 4s infinite ease-in-out'}} />
                     <BatIcon className="absolute text-black opacity-10 w-24 h-24 top-1/3 right-20" style={{animation: 'flyBat 6s infinite ease-in-out reverse'}} />
                 </div>
             );
             return (
-                <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
                     <Cloud className="absolute text-white opacity-40 w-32 h-32 top-20 -left-10" style={{animation: 'floatCloud 8s infinite ease-in-out'}} />
                     <Cloud className="absolute text-white opacity-30 w-48 h-48 top-40 -right-10" style={{animation: 'floatCloud 12s infinite ease-in-out reverse'}} />
                 </div>
@@ -241,13 +241,12 @@
             return (
                 <div className="max-w-md mx-auto w-full h-screen flex flex-col p-4 relative z-20">
                     <div className="flex items-center justify-between mb-6">
-                         {/* Back Button with Text */}
                          <button onClick={onBack} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold shadow-md transition-all ${isHard ? 'bg-red-800 text-red-100 hover:bg-red-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
                              <ArrowRight className="rotate-180" size={20} />
                              <span>返回</span>
                          </button>
                          <h2 className={`text-2xl font-black ${isHard ? 'text-red-100' : 'text-gray-800'}`}>英雄榜</h2>
-                         <div className="w-16"></div> {/* Spacer balance */}
+                         <div className="w-16"></div> 
                     </div>
                     
                     <div className="flex-1 overflow-y-auto space-y-3 pb-4">
@@ -393,7 +392,7 @@
                         <div className="grid grid-cols-3 gap-3">
                             {availableGrades.map(g => {
                                 const hasData = !!db[g]; const isSelected = selectedGrades.includes(g);
-                                return <button key={g} onClick={() => toggleGrade(g)} disabled={!hasData} className={`py-3 rounded-xl font-bold text-lg transition-all relative ${!hasData ? "bg-gray-100 text-gray-300" : isSelected ? (isHard ? "bg-red-600 text-white shadow-lg ring-2 ring-red-400" : "bg-blue-500 text-white shadow-lg ring-2 ring-blue-300") : "bg-white text-gray-600 border-2 border-gray-100"}`}>{g}{isSelected && <CheckCircle size={16} className="absolute top-1 right-1 text-white/50" />}</button>;
+                                return <button key={g} onClick={() => toggleGrade(g)} disabled={!hasData} className={`py-3 rounded-xl font-bold text-lg transition-all relative ${!hasData ? "bg-gray-100 text-gray-300" : isSelected ? (isHard ? "bg-red-600 text-white shadow-lg ring-2 ring-red-400" : "bg-blue-500 text-white shadow-lg ring-2 ring-blue-300") : (isHard ? "bg-red-950 border-2 border-red-900 text-red-200 hover:bg-red-900" : "bg-white text-gray-600 border-2 border-gray-100")}`}>{g}{isSelected && <CheckCircle size={16} className="absolute top-1 right-1 text-white/50" />}</button>;
                             })}
                         </div>
                     </div>
@@ -613,7 +612,7 @@
             const restart = () => { setGameState('menu'); setFinalScore(0); setWrongQuestions([]); };
 
             return (
-                <div className={`min-h-screen flex items-center justify-center transition-colors duration-800 ${difficulty === 'hard' ? 'theme-hard' : 'theme-easy'}`}>
+                <div className={`min-h-screen flex items-center justify-center transition-colors duration-800 app-container ${difficulty === 'hard' ? 'theme-hard' : 'theme-easy'}`}>
                     <BackgroundDecorations difficulty={difficulty} />
                     {gameState === 'menu' && <div className="w-full max-w-md relative z-10"><MainMenu db={db} onStartGame={startGame} difficulty={difficulty} setDifficulty={setDifficulty} savedSettings={savedSettings} onShowHistory={() => setGameState('history')} /><FileUploader onDataLoaded={handleDataLoaded} dataSourceStatus={dataSourceStatus} difficulty={difficulty} /></div>}
                     {gameState === 'history' && <HistoryScreen onBack={() => setGameState('menu')} difficulty={difficulty} />}
