@@ -578,11 +578,11 @@
     "Unit NEW": [
       { "en": "Sunday", "ch": "星期日" },
       { "en": "Monday", "ch": "星期一" },
-      { "en": "Saturday", "ch": "星期六" },
-      { "en": "run", "ch": "跑" },
-      { "en": "very much", "ch": "非常" },
-      { "en": "study", "ch": "讀書" },
-      { "en": "play", "ch": "玩" }
+      { "en": "Tuesday", "ch": "星期二" },
+      { "en": "Wednesday", "ch": "星期三" },
+      { "en": "Thursday", "ch": "星期四" },
+      { "en": "Friday", "ch": "星期五" },
+      { "en": "Saturday", "ch": "星期六" }
     ],
     "Unit ADD": [
       { "en": "morning", "ch": "早上" },
@@ -592,6 +592,9 @@
       { "en": "evening", "ch": "晚上" },
       { "en": "Monday", "ch": "星期一" },
       { "en": "afternoon", "ch": "下午" },
+      { "en": "run", "ch": "跑" },
+      { "en": "very much", "ch": "非常" },
+      { "en": "study", "ch": "讀書" },
       { "en": "a day", "ch": "一天" },
       { "en": "every", "ch": "每一" },
       { "en": "love", "ch": "愛" },
