@@ -576,17 +576,20 @@
       { "en": "electricity", "ch": "電力" }
     ],
     "Unit NEW": [
-      { "en": "Sunday", "ch": "星期日" },
-      { "en": "Saturday", "ch": "星期六" },
-      { "en": "busy", "ch": "忙的" },
-      { "en": "hungry", "ch": "餓的" },
-      { "en": "have", "ch": "有" },
-      { "en": "hate", "ch": "討厭" },
-      { "en": "juice", "ch": "果汁" },
-      { "en": "milk", "ch": "牛奶" }
+      { "en": "a hospital", "ch": "醫院" },
+      { "en": "this", "ch": "這" },
+      { "en": "a city/cities", "ch": "城市" },
+      { "en": "old", "ch": "老的" },
+      { "en": "sick", "ch": "生病" }
     ],
     "Unit ADD": [
       { "en": "morning", "ch": "早上" },
+      { "en": "busy", "ch": "忙的" },
+      { "en": "hungry", "ch": "餓的" },
+      { "en": "milk", "ch": "牛奶" },
+      { "en": "have", "ch": "有" },
+      { "en": "hate", "ch": "討厭" },
+      { "en": "juice", "ch": "果汁" },
       { "en": "a teacher", "ch": "一個老師" },
       { "en": "a student", "ch": "一個學生" },
       { "en": "a school", "ch": "一間學校" },
